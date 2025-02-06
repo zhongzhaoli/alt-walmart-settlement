@@ -1,10 +1,3 @@
-function addLogItem(content) {
-  if (!document.body) return;
-  const div = document.createElement('div');
-  div.innerHTML = content;
-  document.body.appendChild(div);
-}
-
 function requestLoadListener(_this, response, { url }) {
   if (
     url.indexOf('feeDetailReport') >= 0 ||
@@ -62,16 +55,6 @@ function init(XMLHttpRequest) {
     });
     return send.apply(this, arguments);
   };
-
-  // const newXHR = new XMLHttpRequest();
-  // newXHR.onreadystatechange = function () {
-  //   addLogItem('xhr:' + JSON.stringify(newXHR.responseText));
-  // };
-  // newXHR.open(
-  //   'GET',
-  //   'https://seller.walmart.com/aurora/v1/wfs/reports/getPresetDate'
-  // );
-  // newXHR.send();
 }
 
 init(window.XMLHttpRequest);

@@ -3,11 +3,13 @@ const elementList = [
     key: 'feeDetailReport',
     cardElement: '[data-testid="settlement-card"]',
     planelElement: '[data-testid="settlement-panel"]',
+    num: 0,
   },
   {
     key: 'storageFeeReport',
     cardElement: '[data-testid="storage-card"]',
     planelElement: '[data-testid="storage-panel"]',
+    num: 0,
   },
 ];
 let nowStep = 0;
@@ -33,20 +35,34 @@ function downloadClick(planel) {
   footer.querySelectorAll('button')[1].click();
 }
 
-function selectChange(radio, planel) {
+function timeOutFun(t) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, t);
+  });
+}
+
+async function selectChange(radio, planel) {
   const selectItem = radio.parentNode.parentNode.querySelector('select');
   const children = selectItem.children;
-  if (children.length) {
-    selectItem.value = children[1].value;
-    // 创建一个change事件
-    var event = new Event('change', {
-      bubbles: true,
-      cancelable: false,
-    });
-    selectItem.dispatchEvent(event);
-    setTimeout(() => {
-      downloadClick(planel);
-    }, 500);
+  const realNum = Math.min(3, children.length - 1);
+  elementList[nowStep].num = realNum;
+  if (realNum) {
+    for (let c = 1; c <= realNum; c++) {
+      if (!children[c]) return;
+      selectItem.value = children[c].value;
+      // 创建一个change事件
+      var event = new Event('change', {
+        bubbles: true,
+        cancelable: false,
+      });
+      selectItem.dispatchEvent(event);
+      setTimeout(() => {
+        downloadClick(planel);
+      }, 200);
+      await timeOutFun(4000);
+    }
   }
 }
 
@@ -88,10 +104,13 @@ chrome.runtime.onMessage.addListener((request) => {
       }, 500);
     }
     if (url.includes('feeDetailReport') || url.includes('storageFeeReport')) {
-      setTimeout(() => {
-        nowStep++;
-        cardClick();
-      }, 500);
+      elementList[nowStep].num--;
+      if (elementList[nowStep].num <= 0) {
+        setTimeout(() => {
+          nowStep++;
+          cardClick();
+        }, 500);
+      }
     }
   }
 });

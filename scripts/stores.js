@@ -53,11 +53,11 @@ const openStore = () => {
       document.querySelectorAll('[class*="superStartBtn"]')
     );
     storeLen = divList.length;
-    // 一分钟打开一个店铺
+    // 80秒打开一个店铺
     handle();
     timter = setInterval(() => {
       handle();
-    }, 60000);
+    }, 80000);
   }, 2000);
 };
 
