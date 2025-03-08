@@ -1,33 +1,45 @@
 function requestLoadListener(_this, response, { url }) {
   if (
-    url.indexOf('feeDetailReport') >= 0 ||
+    // url.indexOf('feeDetailReport') >= 0 ||
     url.indexOf('storageFeeReport') >= 0
   ) {
     // 获取店铺信息
     const jsonElement = document.querySelector('[id="app-context-info"]');
     if (!jsonElement || !jsonElement.textContent) return;
-    const { partnerId, sellerId } = JSON.parse(
-      jsonElement.textContent
-    ).sellerContext;
+    const { sellerId } = JSON.parse(jsonElement.textContent).sellerContext;
     const params = new URLSearchParams(url.split('?')[1]);
     const startDate = params.get('startDate');
     const endDate = params.get('endDate');
     // csv内容
     const csvContent = response.currentTarget?.response || '';
+    // 将 CSV 内容转换为 Blob 对象
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    // 创建 File 对象
+    const file = new File([blob], 'data.csv', { type: 'text/csv' });
     // formData组合
     const formData = new FormData();
-    formData.append('file', csvContent);
-    formData.append('dateInfo', JSON.stringify({ startDate, endDate }));
-    formData.append('storeInfo', JSON.stringify({ partnerId, sellerId }));
-    formData.append(
-      'type',
-      url.includes('feeDetailReport') ? 'settlementFee' : 'storageFee'
-    );
+    formData.append('file', file);
+    formData.append('date_info', JSON.stringify({ startDate, endDate }));
+    formData.append('store_info', JSON.stringify({ sellerId }));
+    // formData.append(
+    //   'type',
+    //   url.includes('feeDetailReport') ? 'settlementFee' : 'storageFee'
+    // );
+    // if (url.includes('feeDetailReport')) {
+    // fetch('https://api.dadeszxz.cn/plugin/test', {
+    //   method: 'post',
+    //   body: formData,
+    // });
+    // } else {
     // 发送请求
-    fetch('https://api.dadeszxz.cn/plugin/test', {
-      method: 'post',
-      body: formData,
-    });
+    fetch(
+      'https://altoa.api.altspicerver.com/v1/walmart/order/recon/storage/add',
+      {
+        method: 'post',
+        body: formData,
+      }
+    );
+    // }
     // 修改响应状态码和内容
     _this.status = 500;
     _this.responseText = '模拟的错误信息';

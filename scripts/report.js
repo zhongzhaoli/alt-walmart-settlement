@@ -1,10 +1,10 @@
 const elementList = [
-  {
-    key: 'feeDetailReport',
-    cardElement: '[data-testid="settlement-card"]',
-    planelElement: '[data-testid="settlement-panel"]',
-    num: 0,
-  },
+  // {
+  //   key: 'feeDetailReport',
+  //   cardElement: '[data-testid="settlement-card"]',
+  //   planelElement: '[data-testid="settlement-panel"]',
+  //   num: 0,
+  // },
   {
     key: 'storageFeeReport',
     cardElement: '[data-testid="storage-card"]',
@@ -46,7 +46,7 @@ function timeOutFun(t) {
 async function selectChange(radio, planel) {
   const selectItem = radio.parentNode.parentNode.querySelector('select');
   const children = selectItem.children;
-  const realNum = Math.min(3, children.length - 1);
+  const realNum = children.length - 1;
   elementList[nowStep].num = realNum;
   if (realNum) {
     for (let c = 1; c <= realNum; c++) {
@@ -61,7 +61,7 @@ async function selectChange(radio, planel) {
       setTimeout(() => {
         downloadClick(planel);
       }, 200);
-      await timeOutFun(4000);
+      await timeOutFun(5000);
     }
   }
 }
@@ -103,7 +103,8 @@ chrome.runtime.onMessage.addListener((request) => {
         radioClick();
       }, 500);
     }
-    if (url.includes('feeDetailReport') || url.includes('storageFeeReport')) {
+    if (url.includes('storageFeeReport')) {
+      // if (url.includes('feeDetailReport') || url.includes('storageFeeReport')) {
       elementList[nowStep].num--;
       if (elementList[nowStep].num <= 0) {
         setTimeout(() => {
