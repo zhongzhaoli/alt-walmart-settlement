@@ -101,7 +101,7 @@ chrome.runtime.onMessage.addListener((request) => {
     if (url.indexOf('/aurora/v1/wfs/reports/getPresetDate') >= 0) {
       setTimeout(() => {
         radioClick();
-      }, 500);
+      }, 5000);
     }
     if (url.includes('storageFeeReport')) {
       // if (url.includes('feeDetailReport') || url.includes('storageFeeReport')) {

@@ -57,7 +57,7 @@ const openStore = () => {
     handle();
     timter = setInterval(() => {
       handle();
-    }, 100000);
+    }, 120000);
   }, 2000);
 };
 
