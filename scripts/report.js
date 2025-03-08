@@ -110,7 +110,7 @@ chrome.runtime.onMessage.addListener((request) => {
         setTimeout(() => {
           nowStep++;
           cardClick();
-        }, 500);
+        }, 5000);
       }
     }
   }
