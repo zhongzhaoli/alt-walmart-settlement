@@ -1,3 +1,18 @@
+const elementList = [
+  // {
+  //   key: 'feeDetailReport',
+  //   cardElement: '[data-testid="settlement-card"]',
+  //   planelElement: '[data-testid="settlement-panel"]',
+  //   num: 0,
+  // },
+  {
+    key: 'storageFeeReport',
+    cardElement: '[data-testid="storage-card"]',
+    planelElement: '[data-testid="storage-panel"]',
+    num: 0,
+  },
+];
+
 function requestLoadListener(_this, response, { url }) {
   if (
     // url.indexOf('feeDetailReport') >= 0 ||
@@ -19,7 +34,6 @@ function requestLoadListener(_this, response, { url }) {
     // formData组合
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('date_info', JSON.stringify({ startDate, endDate }));
     formData.append('store_info', JSON.stringify({ sellerId }));
     // formData.append(
     //   'type',
@@ -29,9 +43,20 @@ function requestLoadListener(_this, response, { url }) {
     // fetch('https://api.dadeszxz.cn/plugin/test', {
     //   method: 'post',
     //   body: formData,
-    // });
+    // });ß
     // } else {
     // 发送请求
+    const elementItem = elementList.find(
+      (item) => item.key === 'storageFeeReport'
+    );
+    const selectItem = document
+      .querySelector(elementItem.planelElement)
+      .querySelector('input[type="radio"]')
+      .parentNode.parentNode.querySelector('select');
+    formData.append(
+      'date_info',
+      JSON.stringify({ startDate, endDate, reportDate: selectItem.value })
+    );
     fetch(
       'https://altoa.api.altspicerver.com/v1/walmart/order/recon/storage/add',
       {

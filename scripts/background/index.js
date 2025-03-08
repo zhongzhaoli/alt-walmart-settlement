@@ -41,6 +41,17 @@ const openLogin = () => {
   });
 };
 
+const getCurrentTabId = (callback) => {
+  chrome.tabs.query({}, function (tabs) {
+    const newTabs = tabs.filter((tab) =>
+      tab.url.includes('https://adminnew.ziniao.com/')
+    );
+    for (let tab of newTabs) {
+      callback(tab.id);
+    }
+  });
+};
+
 const refreshTab = () => {
   getCurrentTabId(async (tabId) => {
     try {
