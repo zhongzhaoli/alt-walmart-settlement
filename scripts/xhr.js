@@ -13,9 +13,10 @@ const elementList = [
   },
 ];
 
-function requestLoadListener(_this, response, { url }) {
+function requestLoadListener(_this, response, { url, reportDate }) {
   if (
     // url.indexOf('feeDetailReport') >= 0 ||
+    url &&
     url.indexOf('storageFeeReport') >= 0
   ) {
     // 获取店铺信息
@@ -46,16 +47,9 @@ function requestLoadListener(_this, response, { url }) {
     // });ß
     // } else {
     // 发送请求
-    const elementItem = elementList.find(
-      (item) => item.key === 'storageFeeReport'
-    );
-    const selectItem = document
-      .querySelector(elementItem.planelElement)
-      .querySelector('input[type="radio"]')
-      .parentNode.parentNode.querySelector('select');
     formData.append(
       'date_info',
-      JSON.stringify({ startDate, endDate, reportDate: selectItem.value })
+      JSON.stringify({ startDate, endDate, reportDate: reportDate })
     );
     fetch(
       'https://altoa.api.altspicerver.com/v1/walmart/order/recon/storage/add',
@@ -79,8 +73,17 @@ function init(XMLHttpRequest) {
   var send = XHR.send;
   var open = XHR.open;
   XHR.open = function (method, url) {
+    const elementItem = elementList.find(
+      (item) => item.key === 'storageFeeReport'
+    );
+    const selectItem =
+      document
+        ?.querySelector(elementItem.planelElement)
+        ?.querySelector('input[type="radio"]')
+        ?.parentNode.parentNode.querySelector('select') || null;
     this._url = url;
     this._method = method;
+    this._reportDate = selectItem?.value || null;
     return open.apply(this, arguments);
   };
   XHR.send = function () {
@@ -88,6 +91,7 @@ function init(XMLHttpRequest) {
       requestLoadListener(this, response, {
         url: this._url,
         method: this._method,
+        reportDate: this._reportDate,
       });
     });
     return send.apply(this, arguments);
