@@ -60,8 +60,8 @@ async function selectChange(radio, planel) {
       selectItem.dispatchEvent(event);
       setTimeout(() => {
         downloadClick(planel);
-      }, 200);
-      await timeOutFun(5000);
+      }, 2000);
+      await timeOutFun(4000);
     }
   }
 }
