@@ -60,7 +60,7 @@ async function selectChange(radio, planel) {
       selectItem.dispatchEvent(event);
       setTimeout(() => {
         downloadClick(planel);
-      }, 2000);
+      }, 1000);
       await timeOutFun(4000);
     }
   }
@@ -101,7 +101,7 @@ chrome.runtime.onMessage.addListener((request) => {
     if (url.indexOf('/aurora/v1/wfs/reports/getPresetDate') >= 0) {
       setTimeout(() => {
         radioClick();
-      }, 5000);
+      }, 3000);
     }
     if (url.includes('storageFeeReport')) {
       // if (url.includes('feeDetailReport') || url.includes('storageFeeReport')) {
@@ -110,7 +110,7 @@ chrome.runtime.onMessage.addListener((request) => {
         setTimeout(() => {
           nowStep++;
           cardClick();
-        }, 5000);
+        }, 3000);
       }
     }
   }

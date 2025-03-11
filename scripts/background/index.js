@@ -1,6 +1,7 @@
 const REFRESH_ALARM_NAME = 'REFRESH_ALARM_NAME';
-
+const ADMIN_REFRESH_URL = 'https://adminnew.ziniao.com/';
 const isHandleWindowId = [];
+let timer = {};
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.type === 'CLOSE_OTHER_PAGE_KEY') {
     const tabs = await chrome.tabs.query({});
@@ -26,7 +27,47 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       }
     });
   }
+  if (request.type === 'TIME_OUT') {
+    const timeNum = request.timeNum || 0;
+    const businessType = request.businessType || '';
+    await timeOutFun(timeNum);
+    chrome.tabs.sendMessage(sender.tab.id, {
+      type: 'TIME_OUT',
+      businessType,
+    });
+  }
+  if (request.type === 'TIME_INTERVAL') {
+    const timeNum = request.timeNum || 0;
+    const businessType = request.businessType || '';
+    const key = request.key || '';
+    timeIntervalFun(timeNum, key, sender.tab.id, businessType);
+  }
+  if (request.type === 'CLEAR_TIME_INTERVAL') {
+    const { key } = request;
+    clearInterval(timer[key]);
+    delete timer[key];
+  }
 });
+
+const timeOutFun = (t) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, t);
+  });
+};
+
+const timeIntervalFun = (t, key, tabId, businessType, data = {}) => {
+  timer[key] = setInterval(() => {
+    chrome.tabs.sendMessage(tabId, {
+      type: 'TIME_INTERVAL',
+      businessType,
+      key,
+      data,
+    });
+  }, t);
+};
+
 const openLogin = () => {
   chrome.tabs.query({ currentWindow: true }, function (tabs) {
     tabs.forEach((tab) => {
@@ -79,10 +120,38 @@ export const removeRefreshAlarm = async () => {
     await chrome.alarms.clear(REFRESH_ALARM_NAME);
   }
 };
-// 插件初始化
-chrome.runtime.onInstalled.addListener(async () => {
+export const removeCloseAllAlarm = async () => {
+  const alarm = await chrome.alarms.get('CLOSE_ALL_ALARM');
+  if (typeof alarm !== 'undefined') {
+    await chrome.alarms.clear('CLOSE_ALL_ALARM');
+  }
+};
+const createCloseAllAlarm = async () => {
+  const alarm = await chrome.alarms.get('CLOSE_ALL_ALARM');
+  if (typeof alarm === 'undefined') {
+    chrome.alarms.create('CLOSE_ALL_ALARM', {
+      periodInMinutes: 5,
+      delayInMinutes: 5,
+    });
+  }
+};
+let isInit = false;
+const onInit = async () => {
+  if (isInit) return;
+  isInit = true;
   await removeRefreshAlarm();
   createRefreshAlarm();
+  await removeCloseAllAlarm();
+  createCloseAllAlarm();
+};
+
+chrome.runtime.onInstalled.addListener(() => {
+  onInit();
+});
+
+// 插件初始化
+chrome.runtime.onStartup.addListener(() => {
+  onInit();
 });
 
 // 定时器回调
@@ -90,9 +159,18 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === REFRESH_ALARM_NAME) {
     refreshTab();
   }
+  if (alarm.name === 'CLOSE_ALL_ALARM') {
+    const tabs = await chrome.tabs.query({});
+    const isAdmin = tabs.some((tab) => tab.url.indexOf(ADMIN_REFRESH_URL) >= 0);
+    if (!isAdmin) {
+      tabs.forEach((tab) => {
+        chrome.tabs.remove(tab.id);
+      });
+    }
+  }
 });
 
-const init = () => {
+const init = async () => {
   setTimeout(() => {
     openLogin();
   }, 5000);
