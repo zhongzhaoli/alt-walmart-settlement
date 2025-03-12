@@ -108,8 +108,8 @@ export const createRefreshAlarm = async () => {
   const alarm = await chrome.alarms.get(REFRESH_ALARM_NAME);
   if (typeof alarm === 'undefined') {
     chrome.alarms.create(REFRESH_ALARM_NAME, {
-      periodInMinutes: 180,
-      delayInMinutes: 0.5,
+      periodInMinutes: 240,
+      delayInMinutes: 240,
     });
     refreshTab();
   }
