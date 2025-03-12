@@ -130,19 +130,17 @@ const createCloseAllAlarm = async () => {
   const alarm = await chrome.alarms.get('CLOSE_ALL_ALARM');
   if (typeof alarm === 'undefined') {
     chrome.alarms.create('CLOSE_ALL_ALARM', {
-      periodInMinutes: 5,
       delayInMinutes: 5,
     });
   }
 };
-let isInit = false;
+
 const onInit = async () => {
-  if (isInit) return;
-  isInit = true;
-  await removeRefreshAlarm();
-  createRefreshAlarm();
-  await removeCloseAllAlarm();
-  createCloseAllAlarm();
+  // 强制清理旧Alarm
+  await chrome.alarms.clearAll();
+  // 创建新Alarm
+  await createRefreshAlarm();
+  await createCloseAllAlarm();
 };
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -153,13 +151,18 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onStartup.addListener(() => {
   onInit();
 });
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+  if (removeInfo.isWindowClosing) {
+    chrome.alarms.clearAll();
+  }
+});
 
 // 定时器回调
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === REFRESH_ALARM_NAME) {
     refreshTab();
   }
-  if (alarm.name === 'CLOSE_ALL_ALARM') {
+  if (alarm.name === 'CLOSE_ALL_ALARM' && isInit && isDelete) {
     const tabs = await chrome.tabs.query({});
     const isAdmin = tabs.some((tab) => tab.url.indexOf(ADMIN_REFRESH_URL) >= 0);
     if (!isAdmin) {
