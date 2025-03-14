@@ -1,10 +1,10 @@
 const elementList = [
-  // {
-  //   key: 'feeDetailReport',
-  //   cardElement: '[data-testid="settlement-card"]',
-  //   planelElement: '[data-testid="settlement-panel"]',
-  //   num: 0,
-  // },
+  {
+    key: 'feeDetailReport',
+    cardElement: '[data-testid="settlement-card"]',
+    planelElement: '[data-testid="settlement-panel"]',
+    num: 0,
+  },
   {
     key: 'storageFeeReport',
     cardElement: '[data-testid="storage-card"]',
@@ -33,13 +33,15 @@ function addLogItem(content) {
 
 async function requestLoadListener(_this, response, { url }) {
   if (
-    // url.indexOf('feeDetailReport') >= 0 ||
     url &&
-    url.indexOf('storageFeeReport') >= 0
+    (url.indexOf('feeDetailReport') >= 0 ||
+      url.indexOf('storageFeeReport') >= 0)
   ) {
-    const elementItem = elementList.find(
-      (item) => item.key === 'storageFeeReport'
-    );
+    const type =
+      url.indexOf('feeDetailReport') >= 0
+        ? 'feeDetailReport'
+        : 'storageFeeReport';
+    const elementItem = elementList.find((item) => item.key === type);
     const selectItem =
       document
         ?.querySelector(elementItem.planelElement)
@@ -50,9 +52,6 @@ async function requestLoadListener(_this, response, { url }) {
     const jsonElement = document.querySelector('[id="app-context-info"]');
     if (!jsonElement || !jsonElement.textContent) return;
     const { sellerId } = JSON.parse(jsonElement.textContent).sellerContext;
-    const params = new URLSearchParams(url.split('?')[1]);
-    const startDate = params.get('startDate');
-    const endDate = params.get('endDate');
     // csv内容
     const csvContent = response.currentTarget?.response || '';
     // 将 CSV 内容转换为 Blob 对象
@@ -63,22 +62,9 @@ async function requestLoadListener(_this, response, { url }) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('store_info', JSON.stringify({ sellerId }));
-    // formData.append(
-    //   'type',
-    //   url.includes('feeDetailReport') ? 'settlementFee' : 'storageFee'
-    // );
-    // if (url.includes('feeDetailReport')) {
-    // fetch('https://api.dadeszxz.cn/plugin/test', {
-    //   method: 'post',
-    //   body: formData,
-    // });ß
-    // } else {
-    // 发送请求
     formData.append(
       'date_info',
       JSON.stringify({
-        startDate,
-        endDate,
         reportDate: selectItem?.value || null,
       })
     );
@@ -90,31 +76,32 @@ async function requestLoadListener(_this, response, { url }) {
     addLogItem('已发送请求至服务器，report_date: ' + selectItem?.value);
     while (true) {
       try {
-        await fetchCore(formData);
+        await fetchCore(
+          formData,
+          type === 'feeDetailReport'
+            ? '/recon/settlement/add'
+            : '/recon/storage/add'
+        );
         break;
       } catch (err) {
-        addLogItem('服务器回调失败，正在重试');
+        addLogItem('服务器回调失败，正在重试 + ' + err);
       }
     }
-    // }
     return;
   }
 }
-function fetchCore(formData) {
+function fetchCore(formData, url) {
   return new Promise((resolve, reject) => {
-    fetch(
-      'https://altoa.api.altspicerver.com/v1/walmart/order/recon/storage/add',
-      {
-        method: 'post',
-        body: formData,
-      }
-    )
+    fetch(`https://altoa.api.altspicerver.com/v1/walmart/order${url}`, {
+      method: 'post',
+      body: formData,
+    })
       .then(() => {
         addLogItem('服务器回调成功');
         resolve();
       })
-      .catch(() => {
-        reject();
+      .catch((err) => {
+        reject(err);
       });
   });
 }

@@ -108,8 +108,8 @@ export const createRefreshAlarm = async () => {
   const alarm = await chrome.alarms.get(REFRESH_ALARM_NAME);
   if (typeof alarm === 'undefined') {
     chrome.alarms.create(REFRESH_ALARM_NAME, {
-      periodInMinutes: 360,
-      delayInMinutes: 360,
+      periodInMinutes: 1024,
+      delayInMinutes: 1024,
     });
   }
 };
@@ -129,17 +129,20 @@ const createCloseAllAlarm = async () => {
   const alarm = await chrome.alarms.get('CLOSE_ALL_ALARM');
   if (typeof alarm === 'undefined') {
     chrome.alarms.create('CLOSE_ALL_ALARM', {
-      delayInMinutes: 10,
+      delayInMinutes: 32,
     });
   }
 };
 
+let isInit = false;
 const onInit = async () => {
+  isInit = false;
   // 强制清理旧Alarm
   await chrome.alarms.clearAll();
   // 创建新Alarm
   await createRefreshAlarm();
   await createCloseAllAlarm();
+  isInit = true;
 };
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -152,6 +155,7 @@ chrome.runtime.onStartup.addListener(() => {
 });
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   if (removeInfo.isWindowClosing) {
+    isInit = false;
     chrome.alarms.clearAll();
   }
 });
@@ -161,7 +165,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === REFRESH_ALARM_NAME) {
     refreshTab();
   }
-  if (alarm.name === 'CLOSE_ALL_ALARM') {
+  if (alarm.name === 'CLOSE_ALL_ALARM' && isInit) {
     const tabs = await chrome.tabs.query({});
     const isAdmin = tabs.some((tab) => tab.url.indexOf(ADMIN_REFRESH_URL) >= 0);
     if (!isAdmin) {

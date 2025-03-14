@@ -1,10 +1,10 @@
 const elementList = [
-  // {
-  //   key: 'feeDetailReport',
-  //   cardElement: '[data-testid="settlement-card"]',
-  //   planelElement: '[data-testid="settlement-panel"]',
-  //   num: 0,
-  // },
+  {
+    key: 'feeDetailReport',
+    cardElement: '[data-testid="settlement-card"]',
+    planelElement: '[data-testid="settlement-panel"]',
+    num: 0,
+  },
   {
     key: 'storageFeeReport',
     cardElement: '[data-testid="storage-card"]',
@@ -140,9 +140,6 @@ chrome.runtime.onMessage.addListener((request) => {
         });
       }
     }
-    // if (url.includes('storageFeeReport')) {
-    // if (url.includes('feeDetailReport') || url.includes('storageFeeReport')) {
-    // }
   }
   if (type === 'TIME_OUT') {
     const { businessType } = request;
