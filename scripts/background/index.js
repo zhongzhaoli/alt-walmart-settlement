@@ -108,10 +108,9 @@ export const createRefreshAlarm = async () => {
   const alarm = await chrome.alarms.get(REFRESH_ALARM_NAME);
   if (typeof alarm === 'undefined') {
     chrome.alarms.create(REFRESH_ALARM_NAME, {
-      periodInMinutes: 240,
-      delayInMinutes: 240,
+      periodInMinutes: 360,
+      delayInMinutes: 360,
     });
-    refreshTab();
   }
 };
 export const removeRefreshAlarm = async () => {
@@ -130,7 +129,7 @@ const createCloseAllAlarm = async () => {
   const alarm = await chrome.alarms.get('CLOSE_ALL_ALARM');
   if (typeof alarm === 'undefined') {
     chrome.alarms.create('CLOSE_ALL_ALARM', {
-      delayInMinutes: 5,
+      delayInMinutes: 10,
     });
   }
 };
@@ -162,7 +161,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === REFRESH_ALARM_NAME) {
     refreshTab();
   }
-  if (alarm.name === 'CLOSE_ALL_ALARM' && isInit && isDelete) {
+  if (alarm.name === 'CLOSE_ALL_ALARM') {
     const tabs = await chrome.tabs.query({});
     const isAdmin = tabs.some((tab) => tab.url.indexOf(ADMIN_REFRESH_URL) >= 0);
     if (!isAdmin) {

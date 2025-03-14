@@ -13,12 +13,39 @@ const elementList = [
   },
 ];
 
-function requestLoadListener(_this, response, { url, reportDate }) {
+function addLogItem(content) {
+  if (!document.body) return;
+  if (document.getElementById('logDiv')) {
+    const logText = document.createElement('div');
+    logText.innerHTML = content;
+    document.getElementById('logDiv').appendChild(logText);
+  } else {
+    const div = document.createElement('div');
+    div.id = 'logDiv';
+    div.style.cssText =
+      'position: fixed; top: 0; left: 0; z-index: 9999; background: #fff; padding: 10px; height: 200px;overflow: auto; width: 50vw';
+    div.innerHTML = content;
+    document.body.appendChild(div);
+  }
+  document.getElementById('logDiv').scrollTop =
+    document.getElementById('logDiv').scrollHeight;
+}
+
+async function requestLoadListener(_this, response, { url }) {
   if (
     // url.indexOf('feeDetailReport') >= 0 ||
     url &&
     url.indexOf('storageFeeReport') >= 0
   ) {
+    const elementItem = elementList.find(
+      (item) => item.key === 'storageFeeReport'
+    );
+    const selectItem =
+      document
+        ?.querySelector(elementItem.planelElement)
+        ?.querySelector('input[type="radio"]')
+        ?.parentNode.parentNode.querySelector('select') || null;
+    addLogItem(url);
     // 获取店铺信息
     const jsonElement = document.querySelector('[id="app-context-info"]');
     if (!jsonElement || !jsonElement.textContent) return;
@@ -49,23 +76,47 @@ function requestLoadListener(_this, response, { url, reportDate }) {
     // 发送请求
     formData.append(
       'date_info',
-      JSON.stringify({ startDate, endDate, reportDate: reportDate })
+      JSON.stringify({
+        startDate,
+        endDate,
+        reportDate: selectItem?.value || null,
+      })
     );
+    // 修改响应状态码和内容
+    _this.status = 500;
+    _this.responseText = '模拟的错误信息';
+    _this.response = '模拟的错误信息';
+    _this.dispatchEvent(new Event('error'));
+    addLogItem('已发送请求至服务器，report_date: ' + selectItem?.value);
+    while (true) {
+      try {
+        await fetchCore(formData);
+        break;
+      } catch (err) {
+        addLogItem('服务器回调失败，正在重试');
+      }
+    }
+    // }
+    return;
+  }
+}
+function fetchCore(formData) {
+  return new Promise((resolve, reject) => {
     fetch(
       'https://altoa.api.altspicerver.com/v1/walmart/order/recon/storage/add',
       {
         method: 'post',
         body: formData,
       }
-    );
-    // }
-    // 修改响应状态码和内容
-    _this.status = 500;
-    _this.responseText = '模拟的错误信息';
-    _this.response = '模拟的错误信息';
-    _this.dispatchEvent(new Event('error'));
-    return;
-  }
+    )
+      .then(() => {
+        addLogItem('服务器回调成功');
+        resolve();
+      })
+      .catch(() => {
+        reject();
+      });
+  });
 }
 
 function init(XMLHttpRequest) {
@@ -73,17 +124,8 @@ function init(XMLHttpRequest) {
   var send = XHR.send;
   var open = XHR.open;
   XHR.open = function (method, url) {
-    const elementItem = elementList.find(
-      (item) => item.key === 'storageFeeReport'
-    );
-    const selectItem =
-      document
-        ?.querySelector(elementItem.planelElement)
-        ?.querySelector('input[type="radio"]')
-        ?.parentNode.parentNode.querySelector('select') || null;
     this._url = url;
     this._method = method;
-    this._reportDate = selectItem?.value || null;
     return open.apply(this, arguments);
   };
   XHR.send = function () {
@@ -91,7 +133,6 @@ function init(XMLHttpRequest) {
       requestLoadListener(this, response, {
         url: this._url,
         method: this._method,
-        reportDate: this._reportDate,
       });
     });
     return send.apply(this, arguments);
