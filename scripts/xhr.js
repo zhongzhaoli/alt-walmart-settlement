@@ -33,6 +33,14 @@ function addLogItem(content) {
     document.getElementById('logDiv').scrollHeight;
 }
 
+const timeOutFun = (t) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, t);
+  });
+};
+
 async function requestLoadListener(_this, response, { url }) {
   if (
     url &&
@@ -74,6 +82,7 @@ async function requestLoadListener(_this, response, { url }) {
         break;
       } catch (err) {
         addLogItem('服务器回调失败，正在重试 + ' + err);
+        await timeOutFun(2000);
       }
     }
     return;
