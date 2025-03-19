@@ -46,6 +46,54 @@ function addLogItem(content) {
     document.getElementById('logDiv').scrollHeight;
 }
 
+function generateMonthRange() {
+  // 固定起始时间
+  const FIXED_START = { year: 2022, month: 1 }; // 2022年1月
+
+  // 获取当前时间的前一个月
+  const now = new Date();
+  let endYear = now.getFullYear();
+  let endMonth = now.getMonth(); // 0-based (0=一月)
+
+  // 计算前一个月
+  if (endMonth === 0) {
+    endYear--;
+    endMonth = 11; // 12月
+  } else {
+    endMonth--;
+  }
+
+  // 转换为1-based月份
+  const endDate = {
+    year: endYear,
+    month: endMonth + 1,
+  };
+
+  // 生成月份数组
+  const result = [];
+  let currentYear = FIXED_START.year;
+  let currentMonth = FIXED_START.month;
+
+  // 循环直到当前超过结束日期
+  while (
+    currentYear < endDate.year ||
+    (currentYear === endDate.year && currentMonth <= endDate.month)
+  ) {
+    // 格式化月份为两位数
+    result.push(`${currentYear}-${currentMonth.toString().padStart(2, '0')}`);
+
+    // 处理月份递增
+    if (currentMonth === 12) {
+      currentYear++;
+      currentMonth = 1;
+    } else {
+      currentMonth++;
+    }
+  }
+
+  return result;
+}
+
 function downloadClick() {
   const planel = getPlanel();
   const dialog = planel.querySelector('[role="dialog"]');
@@ -53,14 +101,10 @@ function downloadClick() {
   footer.querySelectorAll('button')[1].click();
 }
 
-async function getSelectOptions(radio) {
-  const selectItem = radio.parentNode.parentNode.querySelector('select');
-  const children = selectItem.children;
-  const realNum = children.length - 1;
-  elementList[nowStep].num = realNum;
-  if (realNum) {
-    await downloadCsv();
-  }
+async function getSelectOptions() {
+  const dateRange = generateMonthRange();
+  elementList[nowStep].num = dateRange.length;
+  await downloadCsv();
 }
 
 async function downloadCsv() {
@@ -68,9 +112,17 @@ async function downloadCsv() {
   const radio = planel.querySelector('input[type="radio"]');
   const selectItem = radio.parentNode.parentNode.querySelector('select');
   const children = selectItem.children;
+  if (Array.prototype.slice.call(children).length <= 1) {
+    chrome.runtime.sendMessage({
+      type: 'TIME_OUT',
+      timeNum: 2000,
+      businessType: 'NEXT_CARD',
+    });
+    return;
+  }
   const num = elementList[nowStep].num;
-  if (!children[num]) return;
-  selectItem.value = children[num].value;
+  // TODO：一直点击一个select value就好
+  selectItem.value = children[1].value;
   // // 创建一个change事件
   setTimeout(() => {
     var event = new Event('change', {
@@ -92,7 +144,7 @@ function radioClick() {
   if (!radio.disabled) {
     radio.click();
     setTimeout(() => {
-      getSelectOptions(radio);
+      getSelectOptions();
     }, 500);
   } else {
     nowStep++;
@@ -144,10 +196,6 @@ chrome.runtime.onMessage.addListener((request) => {
   if (type === 'TIME_OUT') {
     const { businessType } = request;
     if (businessType === 'DOWNLOAD_CLICK') {
-      const planel = getPlanel();
-      const radio = planel.querySelector('input[type="radio"]');
-      const selectItem = radio.parentNode.parentNode.querySelector('select');
-      addLogItem('report.js: ' + selectItem.value);
       downloadClick();
     }
     if (businessType === 'RADIO_CLICK') {
