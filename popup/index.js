@@ -1,10 +1,10 @@
 chrome.runtime.sendMessage({
-  type: 'getURL',
+  type: 'GET_ALARM',
 });
 
 chrome.runtime.onMessage.addListener((request) => {
   const { type, data } = request;
-  if (type === 'POPUP_DATA') {
+  if (type === 'GET_ALARM') {
     document.body.innerHTML = data;
   }
 });

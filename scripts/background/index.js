@@ -27,6 +27,24 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       }
     });
   }
+  if (request.type === 'GET_ALARM') {
+    const alarm = await chrome.alarms.get('CLOSE_ALL_ALARM');
+    if (typeof alarm !== 'undefined') {
+      const time = Math.floor(alarm.scheduledTime - Date.now());
+      const hour = Math.floor(time / 3600000);
+      const minute = Math.floor((time % 3600000) / 60000);
+      const second = Math.floor((time % 60000) / 1000);
+      chrome.runtime.sendMessage({
+        type: 'GET_ALARM',
+        data: `${hour}小时${minute}分钟${second}秒`,
+      });
+    } else {
+      chrome.runtime.sendMessage({
+        type: 'GET_ALARM',
+        data: '没有定时器',
+      });
+    }
+  }
   if (request.type === 'TIME_OUT') {
     const timeNum = request.timeNum || 0;
     const businessType = request.businessType || '';
@@ -142,8 +160,9 @@ const onInit = async () => {
   // 创建新Alarm
   await createRefreshAlarm();
   await createCloseAllAlarm();
-  isInit = true;
 };
+
+const getInit = () => isInit;
 
 chrome.runtime.onInstalled.addListener(() => {
   onInit();
@@ -165,7 +184,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === REFRESH_ALARM_NAME) {
     refreshTab();
   }
-  if (alarm.name === 'CLOSE_ALL_ALARM' && isInit) {
+  if (alarm.name === 'CLOSE_ALL_ALARM' && getInit()) {
     const tabs = await chrome.tabs.query({});
     const isAdmin = tabs.some((tab) => tab.url.indexOf(ADMIN_REFRESH_URL) >= 0);
     if (!isAdmin) {
