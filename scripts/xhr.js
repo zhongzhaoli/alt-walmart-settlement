@@ -95,8 +95,7 @@ function fetchCore(formData, url) {
     xhr.timeout = 60000;
     xhr.open(
       'POST',
-      `https://altoa.api.altspicerver.com/v1/walmart/order${url}`,
-      true
+      `https://altoa.api.altspicerver.com/v1/walmart/order${url}`
     );
     xhr.ontimeout = function () {
       reject(new Error('请求超时'));
@@ -112,7 +111,7 @@ function fetchCore(formData, url) {
         reject(new Error('服务器回调失败'));
       }
     };
-    xhr.send(JSON.stringify(formData));
+    xhr.send(formData);
 
     // fetch(`https://altoa.api.altspicerver.com/v1/walmart/order${url}`, {
     //   method: 'post',
