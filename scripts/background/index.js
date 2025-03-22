@@ -153,13 +153,18 @@ const createCloseAllAlarm = async () => {
 };
 
 let isInit = false;
+let isRunning = false;
 const onInit = async () => {
+  if (isRunning) return;
+  isRunning = true;
   isInit = false;
   // 强制清理旧Alarm
   await chrome.alarms.clearAll();
   // 创建新Alarm
   await createRefreshAlarm();
   await createCloseAllAlarm();
+  isInit = true;
+  isRunning = false;
 };
 
 const getInit = () => isInit;
