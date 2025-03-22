@@ -91,17 +91,40 @@ async function requestLoadListener(_this, response, { url }) {
 
 function fetchCore(formData, url) {
   return new Promise((resolve, reject) => {
-    fetch(`https://altoa.api.altspicerver.com/v1/walmart/order${url}`, {
-      method: 'post',
-      body: formData,
-    })
-      .then(() => {
+    const xhr = new XMLHttpRequest();
+    xhr.timeout = 60000;
+    xhr.open(
+      'POST',
+      `https://altoa.api.altspicerver.com/v1/walmart/order${url}`,
+      true
+    );
+    xhr.ontimeout = function () {
+      reject(new Error('请求超时'));
+    };
+    xhr.onerror = function () {
+      reject(new Error('请求失败'));
+    };
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
         addLogItem('服务器回调成功');
         resolve();
-      })
-      .catch((err) => {
-        reject(err);
-      });
+      } else {
+        reject(new Error('服务器回调失败'));
+      }
+    };
+    xhr.send(JSON.stringify(formData));
+
+    // fetch(`https://altoa.api.altspicerver.com/v1/walmart/order${url}`, {
+    //   method: 'post',
+    //   body: formData,
+    // })
+    //   .then(() => {
+    //     addLogItem('服务器回调成功');
+    //     resolve();
+    //   })
+    //   .catch((err) => {
+    //     reject(err);
+    //   });
   });
 }
 
