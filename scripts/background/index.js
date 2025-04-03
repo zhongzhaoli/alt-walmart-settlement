@@ -173,10 +173,6 @@ chrome.runtime.onInstalled.addListener(() => {
   onInit();
 });
 
-// 插件初始化
-chrome.runtime.onStartup.addListener(() => {
-  onInit();
-});
 chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   if (removeInfo.isWindowClosing) {
     isInit = false;
@@ -206,6 +202,7 @@ const init = async () => {
   }, 5000);
 };
 init();
+onInit();
 
 // 响应回调
 chrome.webRequest.onResponseStarted.addListener(

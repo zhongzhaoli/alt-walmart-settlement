@@ -98,7 +98,18 @@ function downloadClick() {
   const planel = getPlanel();
   const dialog = planel.querySelector('[role="dialog"]');
   const footer = dialog.children[dialog.children.length - 1];
-  footer.querySelectorAll('button')[1].click();
+  const button = footer.querySelectorAll('button')[1];
+  if (button) {
+    if (button.disabled) {
+      chrome.runtime.sendMessage({
+        type: 'TIME_OUT',
+        timeNum: 2000,
+        businessType: 'DOWNLOAD_CLICK',
+      });
+    } else {
+      button.click();
+    }
+  }
 }
 
 async function getSelectOptions() {

@@ -131,7 +131,7 @@ function fetchCore(formData, url) {
 
 function generateMonthRange() {
   // 固定起始时间
-  const FIXED_START = { year: 2022, month: 1 }; // 2022年1月
+  const FIXED_START = { year: 2022, month: 1 };
 
   // 获取当前时间的前一个月
   const now = new Date();
