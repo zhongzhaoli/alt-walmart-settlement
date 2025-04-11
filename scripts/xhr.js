@@ -93,28 +93,6 @@ async function requestLoadListener(_this, response, { url }) {
 
 function fetchCore(formData, url) {
   return new Promise((resolve, reject) => {
-    // const xhr = new XMLHttpRequest();
-    // xhr.timeout = 120000;
-    // xhr.open(
-    //   'POST',
-    //   `https://altoa.api.altspicerver.com/v1/walmart/order${url}`
-    // );
-    // xhr.ontimeout = function () {
-    //   reject(new Error('请求超时'));
-    // };
-    // xhr.onerror = function (err) {
-    //   reject(new Error(err));
-    // };
-    // xhr.onload = function () {
-    //   if (xhr.status >= 200 && xhr.status < 300) {
-    //     addLogItem('服务器回调成功');
-    //     resolve();
-    //   } else {
-    //     reject(new Error('服务器回调失败'));
-    //   }
-    // };
-    // xhr.send(formData);
-
     originFetch(`https://altoa.api.altspicerver.com/v1/walmart/order${url}`, {
       method: 'post',
       body: formData,
@@ -131,47 +109,23 @@ function fetchCore(formData, url) {
 
 function generateMonthRange() {
   // 固定起始时间
-  const FIXED_START = { year: 2022, month: 1 };
+  const FIXED_START = { year: 2025, month: 3, day: 1 };
 
-  // 获取当前时间的前一个月
-  const now = new Date();
-  let endYear = now.getFullYear();
-  let endMonth = now.getMonth(); // 0-based (0=一月)
-
-  // 计算前一个月
-  if (endMonth === 0) {
-    endYear--;
-    endMonth = 11; // 12月
-  } else {
-    endMonth--;
-  }
-
-  // 转换为1-based月份
-  const endDate = {
-    year: endYear,
-    month: endMonth + 1,
-  };
-
-  // 生成月份数组
+  const FIXED_END = { year: 2025, month: 3, day: 31 };
+  const startDate = new Date(
+    FIXED_START.year,
+    FIXED_START.month - 1,
+    FIXED_START.day
+  );
+  const endDate = new Date(FIXED_END.year, FIXED_END.month - 1, FIXED_END.day);
   const result = [];
-  let currentYear = FIXED_START.year;
-  let currentMonth = FIXED_START.month;
-
-  // 循环直到当前超过结束日期
-  while (
-    currentYear < endDate.year ||
-    (currentYear === endDate.year && currentMonth <= endDate.month)
-  ) {
-    // 格式化月份为两位数
-    result.push(`${currentYear}-${currentMonth.toString().padStart(2, '0')}`);
-
-    // 处理月份递增
-    if (currentMonth === 12) {
-      currentYear++;
-      currentMonth = 1;
-    } else {
-      currentMonth++;
-    }
+  const currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    result.push(`${year}-${month}-${day}`);
+    currentDate.setDate(currentDate.getDate() + 1);
   }
 
   return result;
@@ -227,9 +181,9 @@ function init(XMLHttpRequest) {
       const childrenItem = elementItem.childrenList[elementItem.num - 1];
       addLogItem('current select: ' + childrenItem);
       elementItem.num--;
-      const { startDate, endDate } = getPreviousMonthRange(childrenItem);
+      // const { startDate, endDate } = getPreviousMonthRange(childrenItem);
       const tempUrl = url.split('?')[0];
-      newUrl = `${tempUrl}?startDate=${startDate}&endDate=${endDate}`;
+      newUrl = `${tempUrl}?startDate=${childrenItem}&endDate=${childrenItem}`;
     }
     this._url = newUrl;
     this._method = method;

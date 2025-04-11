@@ -28,20 +28,30 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     });
   }
   if (request.type === 'GET_ALARM') {
-    const alarm = await chrome.alarms.get('CLOSE_ALL_ALARM');
-    if (typeof alarm !== 'undefined') {
-      const time = Math.floor(alarm.scheduledTime - Date.now());
-      const hour = Math.floor(time / 3600000);
-      const minute = Math.floor((time % 3600000) / 60000);
-      const second = Math.floor((time % 60000) / 1000);
+    const closeAlarm = await chrome.alarms.get('CLOSE_ALL_ALARM');
+    const refreshAlarm = await chrome.alarms.get('REFRESH_ALARM_NAME');
+    const data = [];
+    if (typeof closeAlarm !== 'undefined') {
+      data.push({
+        name: '定时关闭计时器',
+        time: calTime(closeAlarm.scheduledTime),
+      });
+    }
+    if (typeof refreshAlarm !== 'undefined') {
+      data.push({
+        name: '定时刷新计时器',
+        time: calTime(refreshAlarm.scheduledTime),
+      });
+    }
+    if (data && data.length > 0) {
       chrome.runtime.sendMessage({
         type: 'GET_ALARM',
-        data: `${hour}小时${minute}分钟${second}秒`,
+        data,
       });
     } else {
       chrome.runtime.sendMessage({
         type: 'GET_ALARM',
-        data: '没有定时器',
+        data: `没有定时器`,
       });
     }
   }
@@ -66,6 +76,14 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     delete timer[key];
   }
 });
+
+const calTime = (scheduledTime) => {
+  const time = Math.floor(scheduledTime - Date.now());
+  const hour = Math.floor(time / 3600000);
+  const minute = Math.floor((time % 3600000) / 60000);
+  const second = Math.floor((time % 60000) / 1000);
+  return `${hour}小时${minute}分钟${second}秒`;
+};
 
 const timeOutFun = (t) => {
   return new Promise((resolve) => {
