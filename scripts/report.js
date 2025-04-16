@@ -48,9 +48,9 @@ function addLogItem(content) {
 
 function generateMonthRange() {
   // 固定起始时间
-  const FIXED_START = { year: 2025, month: 3, day: 1 };
+  const FIXED_START = { year: 2025, month: 4, day: 1 };
 
-  const FIXED_END = { year: 2025, month: 3, day: 31 };
+  const FIXED_END = { year: 2025, month: 4, day: 10 };
   const startDate = new Date(
     FIXED_START.year,
     FIXED_START.month - 1,

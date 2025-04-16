@@ -198,6 +198,27 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
   }
 });
 
+chrome.tabs.onCreated.addListener(async (tab) => {
+  if (isRunning) return;
+  isRunning = true;
+  const { url, title } = tab;
+  if (
+    (title.indexOf('跨境电商环境安全提速系统') >= 0 &&
+      url.startsWith('chrome-extension://')) ||
+    url.startsWith(
+      'https://login.account.wal-mart.com' ||
+        url.startsWith('https://seller.walmart.com')
+    )
+  ) {
+    await removeCloseAllAlarm();
+    await createCloseAllAlarm();
+  } else {
+    await removeRefreshAlarm();
+    await createRefreshAlarm();
+  }
+  isRunning = false;
+});
+
 // 定时器回调
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === REFRESH_ALARM_NAME) {
@@ -220,7 +241,6 @@ const init = async () => {
   }, 5000);
 };
 init();
-onInit();
 
 // 响应回调
 chrome.webRequest.onResponseStarted.addListener(
