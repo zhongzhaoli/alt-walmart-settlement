@@ -6,14 +6,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <script src="./index.js"></script>
+  <link rel="stylesheet" href="./layui.css">
   <style>
-    .timeDiv {
-      width: 200px;
+    body {
+      width: 300px;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+
+    .layui-form {
+      display: flex;
+      align-items: center;
+      margin-top: 14px;
+
+    }
+
+    button {
+      margin-left: 14px;
+    }
+
+    .info-box>div {
+      display: flex;
+      align-items: center;
+    }
+
+    .info-box>div:not(:first-child) {
+      margin-top: 14px;
+    }
+
+    .info-box>div>div {
+      color: #999;
     }
   </style>
 </head>
 
 <body>
+  <div class="info-box">
+    <div>关闭时间间隔：<div id="interval"></div>
+    </div>
+    <div>关闭剩余时间：<div id="remainingTime"></div>
+    </div>
+  </div>
 </body>
 
 </html>

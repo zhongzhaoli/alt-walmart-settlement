@@ -1,23 +1,27 @@
-chrome.runtime.sendMessage({
-  type: 'GET_ALARM',
-});
-
-const createDiv = (innerHTML) => {
-  const div = document.createElement('div');
-  div.innerHTML = innerHTML;
-  div.className = 'timeDiv';
-  document.body.appendChild(div);
-};
+let interval = null;
 
 chrome.runtime.onMessage.addListener((request) => {
-  const { type, data } = request;
-  if (type === 'GET_ALARM') {
-    if (Array.isArray(data)) {
-      data.forEach((item) => {
-        createDiv(`${item.name}：${item.time}`);
-      });
-    } else {
-      createDiv(data);
-    }
+  if (request.type === 'GET_INFO_RESPONSE') {
+    const { remainingTime, interval } = request.data;
+    document.getElementById('interval').innerHTML = `${interval}分钟`;
+    document.getElementById('remainingTime').innerHTML = remainingTime;
   }
 });
+
+const getInfo = () => {
+  chrome.runtime.sendMessage({
+    type: 'GET_INFO',
+  });
+};
+
+const init = () => {
+  clearInterval(interval);
+  getInfo();
+  setInterval(() => {
+    getInfo();
+  }, 1000);
+};
+
+window.onload = () => {
+  init();
+};
