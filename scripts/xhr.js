@@ -108,18 +108,17 @@ function fetchCore(formData, url) {
 }
 
 function generateMonthRange() {
-  // 固定起始时间
-  const FIXED_START = { year: 2025, month: 4, day: 11 };
+  // 获取当前日期
+  const today = new Date();
+  const endDate = new Date(today);
 
-  const FIXED_END = { year: 2025, month: 4, day: 20 };
-  const startDate = new Date(
-    FIXED_START.year,
-    FIXED_START.month - 1,
-    FIXED_START.day
-  );
-  const endDate = new Date(FIXED_END.year, FIXED_END.month - 1, FIXED_END.day);
+  // 计算7天前的日期
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() - 6); // 减6得到7天（包括今天）
+
   const result = [];
   const currentDate = new Date(startDate);
+
   while (currentDate <= endDate) {
     const year = currentDate.getFullYear();
     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
