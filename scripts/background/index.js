@@ -78,6 +78,14 @@ chrome.webRequest.onResponseStarted.addListener(
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === closeAlarmName) {
+    const now = Date.now();
+    const scheduledTime = alarm.scheduledTime;
+    if (scheduledTime && now < scheduledTime) {
+      console.log('Alarm triggered too early, ignore.');
+      return;
+    }
+
+    await chrome.alarms.clear(closeAlarmName);
     const tabs = await chrome.tabs.query({});
     tabs.forEach((tab) => {
       chrome.tabs.remove(tab.id);
@@ -114,10 +122,18 @@ const timeIntervalFun = (t, key, tabId, businessType, data = {}) => {
 
 const setCloseAlarm = async (minute) => {
   await chrome.alarms.clear(closeAlarmName);
-  await chrome.alarms.create(closeAlarmName, {
-    delayInMinutes: Number(minute),
-    periodInMinutes: Number(minute),
-  });
+  const alarm = await chrome.alarms.get(closeAlarmName);
+
+  // 确认 alarm 已经清除
+  if (!alarm) {
+    console.log('已成功清除旧的 closeAlarm，准备创建新的');
+    await chrome.alarms.create(closeAlarmName, {
+      delayInMinutes: Number(minute),
+      periodInMinutes: Number(minute),
+    });
+  } else {
+    console.warn('closeAlarm 清除失败，可能存在旧的定时器，取消创建新的 alarm');
+  }
 };
 
 const init = async () => {
