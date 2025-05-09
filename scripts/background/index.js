@@ -1,5 +1,5 @@
 let timer = {};
-let timeInterval = 10;
+let timeInterval = 8;
 let closeAlarmName = 'closeAlarm';
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
@@ -12,10 +12,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     });
   }
   if (request.type === 'CLOSE_ALL') {
-    const tabs = await chrome.tabs.query({});
-    tabs.forEach((tab) => {
-      chrome.tabs.remove(tab.id);
-    });
+    await closeAll();
   }
   if (request.type === 'CLOSE_OTHER_LOGIN') {
     if (isHandleWindowId.includes(sender.tab.windowId)) return;
@@ -86,10 +83,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     }
 
     await chrome.alarms.clear(closeAlarmName);
-    const tabs = await chrome.tabs.query({});
-    tabs.forEach((tab) => {
-      chrome.tabs.remove(tab.id);
-    });
+    await closeAll();
   }
 });
 
@@ -106,6 +100,14 @@ const timeOutFun = (t) => {
     setTimeout(() => {
       resolve();
     }, t);
+  });
+};
+
+const closeAll = async () => {
+  await chrome.alarms.clear(closeAlarmName);
+  const tabs = await chrome.tabs.query({});
+  tabs.forEach((tab) => {
+    chrome.tabs.remove(tab.id);
   });
 };
 
@@ -129,18 +131,25 @@ const setCloseAlarm = async (minute) => {
     console.log('已成功清除旧的 closeAlarm，准备创建新的');
     await chrome.alarms.create(closeAlarmName, {
       delayInMinutes: Number(minute),
-      periodInMinutes: Number(minute),
     });
   } else {
     console.warn('closeAlarm 清除失败，可能存在旧的定时器，取消创建新的 alarm');
   }
 };
 
+let isRunning = false;
 const init = async () => {
+  if (isRunning) return;
+  isRunning = true;
   await setCloseAlarm(timeInterval);
   setTimeout(() => {
     chrome.tabs.create({ url: 'https://seller.walmart.com' });
+    isRunning = false;
   }, 1000);
 };
 
 init();
+
+chrome.runtime.onInstalled.addListener(() => {
+  init();
+});

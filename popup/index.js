@@ -2,8 +2,7 @@ let interval = null;
 
 chrome.runtime.onMessage.addListener((request) => {
   if (request.type === 'GET_INFO_RESPONSE') {
-    const { remainingTime, interval } = request.data;
-    document.getElementById('interval').innerHTML = `${interval}分钟`;
+    const { remainingTime } = request.data;
     document.getElementById('remainingTime').innerHTML = remainingTime;
   }
 });
