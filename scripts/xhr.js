@@ -5,6 +5,10 @@ const elementList = [
     key: 'feeDetailReport',
     cardElement: '[data-testid="settlement-card"]',
     planelElement: '[data-testid="settlement-panel"]',
+    requestEndWiths: 'feeDetailReport',
+    api: '/walmart/order/recon/settlement/add',
+    startKey: 'startDate',
+    endKey: 'endDate',
     num: 0,
     childrenList: [],
   },
@@ -12,6 +16,21 @@ const elementList = [
     key: 'storageFeeReport',
     cardElement: '[data-testid="storage-card"]',
     planelElement: '[data-testid="storage-panel"]',
+    requestEndWiths: 'storageFeeReport',
+    api: '/walmart/order/recon/storage/add',
+    startKey: 'startDate',
+    endKey: 'endDate',
+    num: 0,
+    childrenList: [],
+  },
+  {
+    key: 'inventoryReport',
+    cardElement: '[data-testid="inventoryReconciliation-card"]',
+    planelElement: '[data-testid="inventoryReconciliation-panel"]',
+    requestEndWiths: 'inventoryReconciliation',
+    api: '/plugins/inventory_reconciliation/add',
+    startKey: 'fromDate',
+    endKey: 'toDate',
     num: 0,
     childrenList: [],
   },
@@ -44,15 +63,10 @@ const timeOutFun = (t) => {
 };
 
 async function requestLoadListener(_this, response, { url }) {
-  if (
-    url &&
-    (url.indexOf('feeDetailReport') >= 0 ||
-      url.indexOf('storageFeeReport') >= 0)
-  ) {
-    const type =
-      url.indexOf('feeDetailReport') >= 0
-        ? 'feeDetailReport'
-        : 'storageFeeReport';
+  const target = elementList.find(
+    (item) => item.requestEndWiths && url.indexOf(item.requestEndWiths) >= 0
+  );
+  if (url && target) {
     // 获取店铺信息
     const jsonElement = document.querySelector('[id="app-context-info"]');
     if (!jsonElement || !jsonElement.textContent) return;
@@ -75,12 +89,7 @@ async function requestLoadListener(_this, response, { url }) {
     addLogItem('已发送请求至服务器');
     while (true) {
       try {
-        await fetchCore(
-          formData,
-          type === 'feeDetailReport'
-            ? '/recon/settlement/add'
-            : '/recon/storage/add'
-        );
+        await fetchCore(formData, target.api);
         break;
       } catch (err) {
         addLogItem('服务器回调失败，正在重试 + ' + err);
@@ -93,7 +102,7 @@ async function requestLoadListener(_this, response, { url }) {
 
 function fetchCore(formData, url) {
   return new Promise((resolve, reject) => {
-    originFetch(`https://altoa.api.altspicerver.com/v1/walmart/order${url}`, {
+    originFetch(`https://altoa.api.altspicerver.com/v1${url}`, {
       method: 'post',
       body: formData,
     })
@@ -114,9 +123,9 @@ function generateMonthRange() {
 
   // 计算7天前的日期
   const startDate = new Date(today);
-  startDate.setDate(today.getDate() - 6); // 减6得到7天（包括今天）
-  // const startDate = new Date('2025-04-01');
-  // const endDate = new Date('2025-04-30');
+  startDate.setDate(today.getDate() - 7); // 减6得到7天（包括今天）
+  // const startDate = new Date('2025-04-04');
+  // const endDate = new Date('2025-04-10');
 
   const result = [];
   const currentDate = new Date(startDate);
@@ -131,49 +140,17 @@ function generateMonthRange() {
 
   return result;
 }
-
-function getPreviousMonthRange(yearMonth) {
-  // 解析年份和月份
-  const [year, month] = yearMonth.split('-').map(Number);
-
-  // 创建一个日期对象，表示当前月份的第一天
-  const currentDate = new Date(year, month - 1, 1);
-
-  // 获取前一个月的年份和月份
-  const prevYear = currentDate.getFullYear();
-  const prevMonth = currentDate.getMonth() + 1; // 月份从 0 开始，需要 +1
-
-  // 获取前一个月的初始日期
-  const startDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
-
-  // 获取前一个月的结束日期
-  const endDate = new Date(prevYear, prevMonth, 0); // 下个月的第 0 天即为当前月的最后一天
-  const endDateFormatted = `${prevYear}-${String(prevMonth).padStart(
-    2,
-    '0'
-  )}-${String(endDate.getDate()).padStart(2, '0')}`;
-
-  return {
-    startDate, // 初始日期
-    endDate: endDateFormatted, // 结束日期
-  };
-}
-
 function init(XMLHttpRequest) {
   var XHR = XMLHttpRequest.prototype;
   var send = XHR.send;
   var open = XHR.open;
   XHR.open = function (method, url) {
     let newUrl = url;
-    if (
-      url.indexOf('storageFeeReport') >= 0 ||
-      url.indexOf('feeDetailReport') >= 0
-    ) {
-      const elementItem = elementList.find((item) =>
-        item.key === url.indexOf('storageFeeReport') >= 0
-          ? 'storageFeeReport'
-          : 'feeDetailReport'
-      );
+    const target = elementList.find(
+      (item) => item.requestEndWiths && url.indexOf(item.requestEndWiths) >= 0
+    );
+    if (url && target) {
+      const elementItem = target;
       if (elementItem.num <= 0) {
         const dateRange = generateMonthRange();
         elementItem.childrenList = dateRange;
@@ -182,9 +159,8 @@ function init(XMLHttpRequest) {
       const childrenItem = elementItem.childrenList[elementItem.num - 1];
       addLogItem('current select: ' + childrenItem);
       elementItem.num--;
-      // const { startDate, endDate } = getPreviousMonthRange(childrenItem);
       const tempUrl = url.split('?')[0];
-      newUrl = `${tempUrl}?startDate=${childrenItem}&endDate=${childrenItem}`;
+      newUrl = `${tempUrl}?${target.startKey}=${childrenItem}&${target.endKey}=${childrenItem}`;
     }
     this._url = newUrl;
     this._method = method;

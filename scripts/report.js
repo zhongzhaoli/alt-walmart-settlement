@@ -3,13 +3,34 @@ const elementList = [
     key: 'feeDetailReport',
     cardElement: '[data-testid="settlement-card"]',
     planelElement: '[data-testid="settlement-panel"]',
+    requestEndWiths: 'feeDetailReport',
+    api: '/walmart/order/recon/settlement/add',
+    startKey: 'startDate',
+    endKey: 'endDate',
     num: 0,
+    childrenList: [],
   },
   {
     key: 'storageFeeReport',
     cardElement: '[data-testid="storage-card"]',
     planelElement: '[data-testid="storage-panel"]',
+    requestEndWiths: 'storageFeeReport',
+    api: '/walmart/order/recon/storage/add',
+    startKey: 'startDate',
+    endKey: 'endDate',
     num: 0,
+    childrenList: [],
+  },
+  {
+    key: 'inventoryReport',
+    cardElement: '[data-testid="inventoryReconciliation-card"]',
+    planelElement: '[data-testid="inventoryReconciliation-panel"]',
+    requestEndWiths: 'inventoryReconciliation',
+    api: '/plugins/inventory_reconciliation/add',
+    startKey: 'fromDate',
+    endKey: 'toDate',
+    num: 0,
+    childrenList: [],
   },
 ];
 let nowStep = 0;
@@ -53,9 +74,9 @@ function generateMonthRange() {
 
   // 计算7天前的日期
   const startDate = new Date(today);
-  startDate.setDate(today.getDate() - 6); // 减6得到7天（包括今天）
-  // const startDate = new Date('2025-04-01');
-  // const endDate = new Date('2025-04-30');
+  startDate.setDate(today.getDate() - 7); // 减6得到7天（包括今天）
+  // const startDate = new Date('2025-05-01');
+  // const endDate = new Date('2025-05-08');
 
   const result = [];
   const currentDate = new Date(startDate);
@@ -71,7 +92,10 @@ function generateMonthRange() {
   return result;
 }
 
+let isDoing = false;
 function downloadClick() {
+  if (isDoing) return;
+  isDoing = true;
   const planel = getPlanel();
   const dialog = planel.querySelector('[role="dialog"]');
   const footer = dialog.children[dialog.children.length - 1];
@@ -85,6 +109,7 @@ function downloadClick() {
       });
     } else {
       button.click();
+      isDoing = false;
     }
   }
 }
@@ -145,6 +170,13 @@ function cardClick() {
   const cardSelector = elementList[nowStep].cardElement;
   const card = document.querySelector(cardSelector);
   card.querySelector('button').click();
+  if (elementList[nowStep].key === 'inventoryReport') {
+    chrome.runtime.sendMessage({
+      type: 'TIME_OUT',
+      timeNum: 2000,
+      businessType: 'RADIO_CLICK',
+    });
+  }
 }
 
 chrome.runtime.onMessage.addListener((request) => {
