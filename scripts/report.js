@@ -5,6 +5,7 @@ const elementList = [
     planelElement: '[data-testid="settlement-panel"]',
     requestEndWiths: 'feeDetailReport',
     api: '/walmart/order/recon/settlement/add',
+    type: 'csv',
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
@@ -16,6 +17,7 @@ const elementList = [
     planelElement: '[data-testid="storage-panel"]',
     requestEndWiths: 'storageFeeReport',
     api: '/walmart/order/recon/storage/add',
+    type: 'csv',
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
@@ -27,6 +29,19 @@ const elementList = [
     planelElement: '[data-testid="inventoryReconciliation-panel"]',
     requestEndWiths: 'inventoryReconciliation',
     api: '/plugins/inventory_reconciliation/add',
+    type: 'csv',
+    startKey: 'fromDate',
+    endKey: 'toDate',
+    num: 0,
+    childrenList: [],
+  },
+  {
+    key: 'customerReturnReport',
+    cardElement: '[data-testid="customerReturns-card"]',
+    planelElement: '[data-testid="customerReturns-panel"]',
+    requestEndWiths: 'customerReturnsReportDca',
+    api: '/plugins/customer_returns/add',
+    type: 'json',
     startKey: 'fromDate',
     endKey: 'toDate',
     num: 0,
@@ -156,9 +171,18 @@ function radioClick() {
   const radio = planel.querySelector('input[type="radio"]');
   if (!radio.disabled) {
     radio.click();
-    setTimeout(() => {
-      getSelectOptions();
-    }, 500);
+    if (elementList[nowStep].key === 'customerReturnReport') {
+      elementList[nowStep].num = 1;
+      chrome.runtime.sendMessage({
+        type: 'TIME_OUT',
+        timeNum: 1000,
+        businessType: 'DOWNLOAD_CLICK',
+      });
+    } else {
+      setTimeout(() => {
+        getSelectOptions();
+      }, 500);
+    }
   } else {
     nowStep++;
     cardClick();
@@ -170,7 +194,10 @@ function cardClick() {
   const cardSelector = elementList[nowStep].cardElement;
   const card = document.querySelector(cardSelector);
   card.querySelector('button').click();
-  if (elementList[nowStep].key === 'inventoryReport') {
+  if (
+    elementList[nowStep].key === 'inventoryReport' ||
+    elementList[nowStep].key === 'customerReturnReport'
+  ) {
     chrome.runtime.sendMessage({
       type: 'TIME_OUT',
       timeNum: 2000,
@@ -196,7 +223,6 @@ chrome.runtime.onMessage.addListener((request) => {
       });
     }
     if (url.includes('https://altoa.api.altspicerver.com')) {
-      addLogItem('report:' + url);
       elementList[nowStep].num--;
       if (elementList[nowStep].num <= 0) {
         chrome.runtime.sendMessage({

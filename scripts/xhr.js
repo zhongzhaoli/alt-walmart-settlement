@@ -7,6 +7,7 @@ const elementList = [
     planelElement: '[data-testid="settlement-panel"]',
     requestEndWiths: 'feeDetailReport',
     api: '/walmart/order/recon/settlement/add',
+    type: 'csv',
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
@@ -18,6 +19,7 @@ const elementList = [
     planelElement: '[data-testid="storage-panel"]',
     requestEndWiths: 'storageFeeReport',
     api: '/walmart/order/recon/storage/add',
+    type: 'csv',
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
@@ -29,6 +31,19 @@ const elementList = [
     planelElement: '[data-testid="inventoryReconciliation-panel"]',
     requestEndWiths: 'inventoryReconciliation',
     api: '/plugins/inventory_reconciliation/add',
+    type: 'csv',
+    startKey: 'fromDate',
+    endKey: 'toDate',
+    num: 0,
+    childrenList: [],
+  },
+  {
+    key: 'customerReturnReport',
+    cardElement: '[data-testid="customerReturns-card"]',
+    planelElement: '[data-testid="customerReturns-panel"]',
+    requestEndWiths: 'customerReturnsReportDca',
+    api: '/plugins/customer_returns/add',
+    type: 'json',
     startKey: 'fromDate',
     endKey: 'toDate',
     num: 0,
@@ -71,25 +86,42 @@ async function requestLoadListener(_this, response, { url }) {
     const jsonElement = document.querySelector('[id="app-context-info"]');
     if (!jsonElement || !jsonElement.textContent) return;
     const { sellerId } = JSON.parse(jsonElement.textContent).sellerContext;
-    // csv内容
+    // 内容
     const csvContent = response.currentTarget?.response || '';
-    // 将 CSV 内容转换为 Blob 对象
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    // 创建 File 对象
-    const file = new File([blob], 'data.csv', { type: 'text/csv' });
-    // formData组合
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('store_info', JSON.stringify({ sellerId }));
+    let formData = null;
+    if (target.type === 'csv') {
+      // 将 CSV 内容转换为 Blob 对象
+      const blob = new Blob([csvContent], {
+        type: 'text/csv',
+      });
+      const file = new File([blob], `data.csv`, {
+        type: 'text/csv',
+      });
+      // formData组合
+      formData = new FormData();
+      formData.append('file', file);
+      formData.append('store_info', JSON.stringify({ sellerId, file }));
+      // 创建 File 对象
+    } else {
+      formData = JSON.stringify({
+        seller_id: sellerId,
+        datas: JSON.parse(csvContent),
+      });
+    }
     // 修改响应状态码和内容
     _this.status = 500;
     _this.responseText = '模拟的错误信息';
-    _this.response = '模拟的错误信息';
+    _this.response = null;
+    // 抛出 error 事件以阻止页面处理
     _this.dispatchEvent(new Event('error'));
     addLogItem('已发送请求至服务器');
     while (true) {
       try {
-        await fetchCore(formData, target.api);
+        await fetchCore(
+          formData,
+          target.api,
+          target.type === 'json' ? true : false
+        );
         break;
       } catch (err) {
         addLogItem('服务器回调失败，正在重试 + ' + err);
@@ -100,12 +132,18 @@ async function requestLoadListener(_this, response, { url }) {
   }
 }
 
-function fetchCore(formData, url) {
+function fetchCore(formData, url, json = false) {
   return new Promise((resolve, reject) => {
-    originFetch(`https://altoa.api.altspicerver.com/v1${url}`, {
+    const options = {
       method: 'post',
       body: formData,
-    })
+    };
+    if (json) {
+      options.headers = {
+        'Content-Type': 'application/json',
+      };
+    }
+    originFetch(`https://altoa.api.altspicerver.com/v1${url}`, options)
       .then(() => {
         addLogItem('服务器回调成功');
         resolve();
@@ -131,16 +169,34 @@ function generateMonthRange() {
   const currentDate = new Date(startDate);
 
   while (currentDate <= endDate) {
-    const year = currentDate.getFullYear();
-    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-    const day = String(currentDate.getDate()).padStart(2, '0');
-    result.push(`${year}-${month}-${day}`);
+    result.push(formatDate(currentDate));
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
   return result;
 }
+
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function init(XMLHttpRequest) {
+  // 阻止创建url
+  const originalCreateObjectURL = URL.createObjectURL;
+  URL.createObjectURL = function (blob) {
+    if (
+      blob &&
+      blob.type ===
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ) {
+      addLogItem('阻止下载链接生成');
+      throw new Error('下载链接创建被阻止');
+    }
+    return originalCreateObjectURL.call(this, blob);
+  };
   var XHR = XMLHttpRequest.prototype;
   var send = XHR.send;
   var open = XHR.open;
@@ -151,16 +207,29 @@ function init(XMLHttpRequest) {
     );
     if (url && target) {
       const elementItem = target;
-      if (elementItem.num <= 0) {
-        const dateRange = generateMonthRange();
-        elementItem.childrenList = dateRange;
-        elementItem.num = dateRange.length;
-      }
-      const childrenItem = elementItem.childrenList[elementItem.num - 1];
-      addLogItem('current select: ' + childrenItem);
-      elementItem.num--;
       const tempUrl = url.split('?')[0];
-      newUrl = `${tempUrl}?${target.startKey}=${childrenItem}&${target.endKey}=${childrenItem}`;
+      if (target.key !== 'customerReturnReport') {
+        if (elementItem.num <= 0) {
+          const dateRange = generateMonthRange();
+          elementItem.childrenList = dateRange;
+          elementItem.num = dateRange.length;
+        }
+        const childrenItem = elementItem.childrenList[elementItem.num - 1];
+        elementItem.num--;
+        addLogItem('current select: ' + childrenItem);
+        // 其他类型的请求
+        newUrl = `${tempUrl}?${target.startKey}=${childrenItem}&${target.endKey}=${childrenItem}`;
+      } else {
+        const today = new Date();
+        const pastDate = new Date();
+        pastDate.setDate(today.getDate() - 180);
+        addLogItem(
+          'current select: ' + formatDate(pastDate) + ' - ' + formatDate(today)
+        );
+        newUrl = `${tempUrl}?${target.startKey}=${formatDate(pastDate)}&${
+          target.endKey
+        }=${formatDate(today)}`;
+      }
     }
     this._url = newUrl;
     this._method = method;
