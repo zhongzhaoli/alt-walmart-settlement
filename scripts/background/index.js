@@ -104,6 +104,10 @@ const timeOutFun = (t) => {
 };
 
 const closeAll = async () => {
+  chrome.windows.getCurrent({}, function (window) {
+    const windowId = window.id;
+    chrome.windows.remove(windowId); // 关闭当前窗口
+  });
   await chrome.alarms.clear(closeAlarmName);
   const tabs = await chrome.tabs.query({});
   tabs.forEach((tab) => {
