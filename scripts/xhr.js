@@ -11,6 +11,7 @@ const elementList = [
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
+    days: 30,
     childrenList: [],
   },
   {
@@ -23,6 +24,7 @@ const elementList = [
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
+    days: 30,
     childrenList: [],
   },
   {
@@ -35,6 +37,7 @@ const elementList = [
     startKey: 'fromDate',
     endKey: 'toDate',
     num: 0,
+    days: 7,
     childrenList: [],
   },
   {
@@ -47,6 +50,7 @@ const elementList = [
     startKey: 'fromDate',
     endKey: 'toDate',
     num: 0,
+    days: 7,
     childrenList: [],
   },
 ];
@@ -154,16 +158,16 @@ function fetchCore(formData, url, json = false) {
   });
 }
 
-function generateMonthRange() {
+function generateMonthRange(days = 7) {
   // 获取当前日期
   const today = new Date();
   const endDate = new Date(today);
 
   // 计算7天前的日期
   const startDate = new Date(today);
-  startDate.setDate(today.getDate() - 7); // 减6得到7天（包括今天）
-  // const startDate = new Date('2025-04-04');
-  // const endDate = new Date('2025-04-10');
+  startDate.setDate(today.getDate() - days); // 减6得到7天（包括今天）
+  // const startDate = new Date('2024-12-31');
+  // const endDate = new Date('2025-02-28');
 
   const result = [];
   const currentDate = new Date(startDate);
@@ -210,7 +214,7 @@ function init(XMLHttpRequest) {
       const tempUrl = url.split('?')[0];
       if (target.key !== 'customerReturnReport') {
         if (elementItem.num <= 0) {
-          const dateRange = generateMonthRange();
+          const dateRange = generateMonthRange(elementItem.days);
           elementItem.childrenList = dateRange;
           elementItem.num = dateRange.length;
         }

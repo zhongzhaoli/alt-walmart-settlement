@@ -9,6 +9,7 @@ const elementList = [
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
+    days: 30,
     childrenList: [],
   },
   {
@@ -21,6 +22,7 @@ const elementList = [
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
+    days: 30,
     childrenList: [],
   },
   {
@@ -33,6 +35,7 @@ const elementList = [
     startKey: 'fromDate',
     endKey: 'toDate',
     num: 0,
+    days: 7,
     childrenList: [],
   },
   {
@@ -45,6 +48,7 @@ const elementList = [
     startKey: 'fromDate',
     endKey: 'toDate',
     num: 0,
+    days: 7,
     childrenList: [],
   },
 ];
@@ -82,16 +86,16 @@ function addLogItem(content) {
     document.getElementById('logDiv').scrollHeight;
 }
 
-function generateMonthRange() {
+function generateMonthRange(days = 7) {
   // 获取当前日期
   const today = new Date();
   const endDate = new Date(today);
 
   // 计算7天前的日期
   const startDate = new Date(today);
-  startDate.setDate(today.getDate() - 7); // 减6得到7天（包括今天）
-  // const startDate = new Date('2025-05-01');
-  // const endDate = new Date('2025-05-08');
+  startDate.setDate(today.getDate() - days);
+  // const startDate = new Date('2024-12-31');
+  // const endDate = new Date('2025-02-28');
 
   const result = [];
   const currentDate = new Date(startDate);
@@ -130,7 +134,7 @@ function downloadClick() {
 }
 
 async function getSelectOptions() {
-  const dateRange = generateMonthRange();
+  const dateRange = generateMonthRange(elementList[nowStep].days);
   elementList[nowStep].num = dateRange.length;
   await downloadCsv();
 }
