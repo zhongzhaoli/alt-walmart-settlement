@@ -104,15 +104,20 @@ const timeOutFun = (t) => {
 };
 
 const closeAll = async () => {
-  chrome.windows.getCurrent({}, function (window) {
-    const windowId = window.id;
-    chrome.windows.remove(windowId); // 关闭当前窗口
-  });
+  // 获取所有窗口
+  const allWindows = await chrome.windows.getAll();
+
+  // 批量关闭所有窗口
+  for (const window of allWindows) {
+    try {
+      chrome.windows.remove(window.id);
+    } catch (error) {
+      console.error(`关闭窗口 ${window.id} 失败:`, error);
+    }
+  }
+
+  // 清除定时器
   await chrome.alarms.clear(closeAlarmName);
-  const tabs = await chrome.tabs.query({});
-  tabs.forEach((tab) => {
-    chrome.tabs.remove(tab.id);
-  });
 };
 
 const timeIntervalFun = (t, key, tabId, businessType, data = {}) => {
