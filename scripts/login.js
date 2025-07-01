@@ -43,9 +43,6 @@ chrome.runtime.onMessage.addListener(async (request) => {
           );
         }
         sended = true;
-        chrome.runtime.sendMessage({
-          type: 'CLOSE_ALL',
-        });
       }
     }
   }
