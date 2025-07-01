@@ -87,15 +87,15 @@ function addLogItem(content) {
 }
 
 function generateMonthRange(days = 7) {
-  // 获取当前日期
-  const today = new Date();
-  const endDate = new Date(today);
+  // // 获取当前日期
+  // const today = new Date();
+  // const endDate = new Date(today);
 
-  // 计算7天前的日期
-  const startDate = new Date(today);
-  startDate.setDate(today.getDate() - days);
-  // const startDate = new Date('2024-12-31');
-  // const endDate = new Date('2025-02-28');
+  // // 计算7天前的日期
+  // const startDate = new Date(today);
+  // startDate.setDate(today.getDate() - days);
+  const startDate = new Date('2024-12-31');
+  const endDate = new Date('2025-07-01');
 
   const result = [];
   const currentDate = new Date(startDate);
