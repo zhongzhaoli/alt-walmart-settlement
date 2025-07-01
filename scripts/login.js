@@ -30,6 +30,34 @@ window.onload = function () {
   }, 1000);
 };
 
+let sended = false;
+chrome.runtime.onMessage.addListener(async (request) => {
+  const { type, businessType } = request;
+  if (type === 'TIME_INTERVAL') {
+    if (businessType === 'CAPTCHA') {
+      const captchaElement = document.querySelector('.captcha-text-container');
+      if (captchaElement) {
+        if (!sended) {
+          await fetch(
+            'https://altoa.api.altspicerver.com/v1/plugins/captcha/notify'
+          );
+        }
+        sended = true;
+        chrome.runtime.sendMessage({
+          type: 'CLOSE_ALL',
+        });
+      }
+    }
+  }
+});
+
+chrome.runtime.sendMessage({
+  type: 'TIME_INTERVAL',
+  timeNum: 1000,
+  businessType: 'CAPTCHA',
+  key: 'loginCaptcha',
+});
+
 window.addEventListener('beforeunload', () => {
   clearInterval(timer);
   count = 0;
