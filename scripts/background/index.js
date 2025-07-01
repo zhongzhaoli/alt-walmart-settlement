@@ -1,6 +1,7 @@
 let timer = {};
-let timeInterval = 8;
+let timeInterval = 12;
 let closeAlarmName = 'closeAlarm';
+let isHandleWindowId = [];
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.type === 'CLOSE_OTHER_PAGE_KEY') {
@@ -26,6 +27,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   }
   if (request.type === 'GET_INFO') {
     const closeAlarm = await chrome.alarms.get(closeAlarmName);
+    const storageData = await chrome.storage.local.get('initTime');
     chrome.runtime.sendMessage({
       type: 'GET_INFO_RESPONSE',
       data: {
@@ -33,6 +35,10 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         remainingTime:
           typeof closeAlarm !== 'undefined'
             ? calTime(closeAlarm.scheduledTime)
+            : '未设置',
+        storageTime:
+          'initTime' in storageData && typeof storageData.initTime === 'string'
+            ? storageData.initTime
             : '未设置',
       },
     });
@@ -85,6 +91,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     await chrome.alarms.clear(closeAlarmName);
     await closeAll();
   }
+  if (alarm.name === 'storageClearAlarm') {
+    initTimeTest();
+  }
 });
 
 const calTime = (scheduledTime) => {
@@ -104,15 +113,12 @@ const timeOutFun = (t) => {
 };
 
 const closeAll = async () => {
-  chrome.windows.getCurrent({}, function (window) {
-    const windowId = window.id;
-    chrome.windows.remove(windowId); // 关闭当前窗口
-  });
   await chrome.alarms.clear(closeAlarmName);
   const tabs = await chrome.tabs.query({});
   tabs.forEach((tab) => {
     chrome.tabs.remove(tab.id);
   });
+  await chrome.storage.local.clear();
 };
 
 const timeIntervalFun = (t, key, tabId, businessType, data = {}) => {
@@ -126,26 +132,58 @@ const timeIntervalFun = (t, key, tabId, businessType, data = {}) => {
   }, t);
 };
 
-const setCloseAlarm = async (minute) => {
+const setCloseAlarm = async () => {
   await chrome.alarms.clear(closeAlarmName);
   const alarm = await chrome.alarms.get(closeAlarmName);
-
-  // 确认 alarm 已经清除
   if (!alarm) {
-    console.log('已成功清除旧的 closeAlarm，准备创建新的');
     await chrome.alarms.create(closeAlarmName, {
-      delayInMinutes: Number(minute),
+      delayInMinutes: Number(timeInterval),
+      periodInMinutes: Number(timeInterval),
     });
-  } else {
-    console.warn('closeAlarm 清除失败，可能存在旧的定时器，取消创建新的 alarm');
   }
+  await chrome.alarms.clear('storageClearAlarm');
+  const _alarm = await chrome.alarms.get('storageClearAlarm');
+  if (!_alarm) {
+    await chrome.alarms.create('storageClearAlarm', {
+      delayInMinutes: 0.5,
+      periodInMinutes: 0.5,
+    });
+  }
+};
+
+const initTimeTest = async () => {
+  const storageData = await chrome.storage.local.get('initTime');
+  if ('initTime' in storageData && typeof storageData.initTime === 'string') {
+    const now = new Date();
+    const initDate = new Date(storageData.initTime);
+    const timeDiff = now - initDate;
+    if (timeDiff > timeInterval * 60 * 1000) {
+      await chrome.storage.local.clear();
+      await closeAll();
+    }
+  } else {
+    const formattedDate = formatDate(new Date());
+    await chrome.storage.local.set({ initTime: formattedDate });
+  }
+};
+
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
 let isRunning = false;
 const init = async () => {
   if (isRunning) return;
   isRunning = true;
-  await setCloseAlarm(timeInterval);
+  await initTimeTest();
+  await setCloseAlarm();
   setTimeout(() => {
     chrome.tabs.create({ url: 'https://seller.walmart.com' });
     isRunning = false;

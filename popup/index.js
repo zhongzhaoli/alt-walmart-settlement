@@ -2,8 +2,9 @@ let interval = null;
 
 chrome.runtime.onMessage.addListener((request) => {
   if (request.type === 'GET_INFO_RESPONSE') {
-    const { remainingTime } = request.data;
+    const { remainingTime, storageTime } = request.data;
     document.getElementById('remainingTime').innerHTML = remainingTime;
+    document.getElementById('storageTime').innerHTML = storageTime;
   }
 });
 

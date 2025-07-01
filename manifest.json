@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ALT 报表下载",
   "description": "ALT - 报表下载插件",
-  "version": "4.7.7",
+  "version": "4.8.2",
   "action": {
     "default_popup": "popup/index.html",
     "default_title": "ALT - 报表下载插件",
@@ -36,8 +36,8 @@
       "run_at": "document_start"
     },
     {
-      "js": ["script/captcha.js"],
-      "matches": ["https://seller.walmart.com/blocked"],
+      "js": ["scripts/captcha.js"],
+      "matches": ["https://seller.walmart.com/blocked*"],
       "run_at": "document_start"
     },
     {
@@ -45,7 +45,7 @@
       "exclude_matches": [
         "https://seller.walmart.com/home",
         "https://seller.walmart.com/wfs/reports",
-        "https://seller.walmart.com/blocked"
+        "https://seller.walmart.com/blocked*"
       ],
       "matches": ["https://seller.walmart.com/*"]
     },
