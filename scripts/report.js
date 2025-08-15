@@ -9,7 +9,7 @@ const elementList = [
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
-    days: 30,
+    days: 45,
     childrenList: [],
   },
   {
@@ -22,7 +22,7 @@ const elementList = [
     startKey: 'startDate',
     endKey: 'endDate',
     num: 0,
-    days: 30,
+    days: 45,
     childrenList: [],
   },
   // {
@@ -48,7 +48,7 @@ const elementList = [
     startKey: 'fromDate',
     endKey: 'toDate',
     num: 0,
-    days: 7,
+    days: 30,
     childrenList: [],
   },
 ];

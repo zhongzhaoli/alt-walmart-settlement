@@ -1,5 +1,5 @@
 let timer = {};
-let timeInterval = 8;
+let timeInterval = 20;
 let closeAlarmName = 'closeAlarm';
 let isHandleWindowId = [];
 
